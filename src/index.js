@@ -583,7 +583,10 @@
         if (this.isDragging() && this.isDraggingFrom()) {
           var fromIndex = this.state.draggedIndex;
           var toIndex = this.state.placedIndex;
-
+          var draggedElementId = store.getState().draggedElement.props.id;
+          if (this.props.onDragEnd && draggedElementId) {
+            this.props.onDragEnd(event, draggedElementId);
+          }
           store.stopDrag(this.props.reorderId, this.props.reorderGroup);
 
           if (
@@ -606,7 +609,7 @@
         mouseDown = null;
       },
 
-      _handleAF: function (af, event) {
+      _handleAF: function (event) {
         // console.log('_handleAF', event);
         this.copyTouchKeys(event);
 
@@ -674,8 +677,8 @@
           this.preventNativeScrolling(event);
           if (window.requestAnimationFrame) {
             var that = this;
-            this.windowMoveAF = window.requestAnimationFrame(function (af) {
-              that._handleAF(af, event);
+            this.windowMoveAF = window.requestAnimationFrame(function () {
+              that._handleAF(event);
             });
           } else {
             this.windowMoveAF = true;
@@ -810,6 +813,9 @@
       touchHoldTime: PropTypes.number,
       mouseHoldTime: PropTypes.number,
       onReorder: PropTypes.func,
+      // onDragStart and onDragEnd are callbacks with the only argument being the id attribute on the element being dragged
+      onDragStart: PropTypes.func,
+      onDragEnd: PropTypes.func,
       placeholder: PropTypes.element,
       autoScroll: PropTypes.bool,
       autoScrollParents: PropTypes.bool,
