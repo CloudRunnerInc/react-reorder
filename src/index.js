@@ -606,8 +606,8 @@
         mouseDown = null;
       },
 
-      // Update dragged position & placeholder index, invalidate drag if moved
-      onWindowMove: function (event) {
+      _handleAF: function (af, event) {
+        // console.log('_handleAF', event);
         this.copyTouchKeys(event);
 
         if (
@@ -618,9 +618,6 @@
         ) {
           this.moved = true;
         }
-
-        if (this.isDragging() && this.isInvolvedInDragging()) {
-          this.preventNativeScrolling(event);
 
           var element = this.rootNode;
 
@@ -646,13 +643,44 @@
 
           }
 
+        if (this.state.draggedStyle) {
           this.state.draggedStyle.transform = createOffsetStyles(event, this.props);
           store.setDraggedStyle(this.props.reorderId, this.props.reorderGroup, this.state.draggedStyle);
+        }
 
           mouseOffset = {
             clientX: event.clientX,
             clientY: event.clientY
           };
+
+        if (window.requestAnimationFrame) {
+          this.windowMoveAF = null;
+        } else {
+          setTimeout(function () {
+            this.windowMoveAF = null;
+          }, 1000 / 60); // aim for 60 fps
+        }
+      },
+
+      // Update dragged position & placeholder index, invalidate drag if moved
+      onWindowMove: function (event) {
+        // console.log('onWindowMove');
+
+        if (this.windowMoveAF) {
+          return;
+        }
+
+        if (this.isDragging() && this.isInvolvedInDragging()) {
+          this.preventNativeScrolling(event);
+          if (window.requestAnimationFrame) {
+            var that = this;
+            this.windowMoveAF = window.requestAnimationFrame(function (af) {
+              that._handleAF(af, event);
+            });
+          } else {
+            this.windowMoveAF = true;
+            this._handleAF(); // call inner function now if no animation frame
+          }
         }
       },
 
