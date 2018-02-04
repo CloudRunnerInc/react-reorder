@@ -14,10 +14,12 @@
   var mouseDown = null;
 
   function createOffsetStyles (event, props) {
+    if (mouseOffset) {
     var top = (!props.lock || props.lock === 'horizontal') ? mouseOffset.clientY - mouseDown.clientY : 0;
     var left = (!props.lock || props.lock === 'vertical') ? mouseOffset.clientX - mouseDown.clientX : 0;
 
     return 'translate(' + left + 'px,' + top + 'px)';
+  }
   }
 
   function getScrollOffsetX (rect, node) {
