@@ -15,11 +15,11 @@
 
   function createOffsetStyles (event, props) {
     if (mouseOffset) {
-    var top = (!props.lock || props.lock === 'horizontal') ? mouseOffset.clientY - mouseDown.clientY : 0;
-    var left = (!props.lock || props.lock === 'vertical') ? mouseOffset.clientX - mouseDown.clientX : 0;
+      var top = (!props.lock || props.lock === 'horizontal') ? mouseOffset.clientY - mouseDown.clientY : 0;
+      var left = (!props.lock || props.lock === 'vertical') ? mouseOffset.clientX - mouseDown.clientX : 0;
 
-    return 'translate(' + left + 'px,' + top + 'px)';
-  }
+      return 'translate(' + left + 'px,' + top + 'px)';
+    }
   }
 
   function getScrollOffsetX (rect, node) {
@@ -534,6 +534,10 @@
 
           store.startDrag(this.props.reorderId, this.props.reorderGroup, index, this.props.children[index], this);
           store.setDraggedStyle(this.props.reorderId, this.props.reorderGroup, draggedStyle);
+          var draggedElementId = target.getAttribute('id');
+          if (this.props.onDragStart && draggedElementId) {
+            this.props.onDragStart(event, draggedElementId);
+          }
 
           mouseOffset = {
             clientX: event.clientX,
@@ -610,7 +614,6 @@
       },
 
       _handleAF: function (event) {
-        // console.log('_handleAF', event);
         this.copyTouchKeys(event);
 
         if (
@@ -622,39 +625,39 @@
           this.moved = true;
         }
 
-          var element = this.rootNode;
+        var element = this.rootNode;
 
-          if (this.collidesWithElement(event, element)) {
+        if (this.collidesWithElement(event, element)) {
 
-            var children = element.childNodes;
-            var collisionIndex = this.findCollisionIndex(event, children);
+          var children = element.childNodes;
+          var collisionIndex = this.findCollisionIndex(event, children);
 
-            if (
-              collisionIndex <= this.props.children.length &&
-              collisionIndex >= 0
-            ) {
-              store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, collisionIndex, this);
-            } else if (
-              typeof this.props.reorderGroup !== 'undefined' && // Is part of a group
-              (
-                (!this.props.children || !this.props.children.length) || // If all items removed
-                (this.isDraggingFrom() && this.props.children.length === 1) // If dragging back to a now empty list
-              )
-            ) {
-              store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, 0, this);
-            }
-
+          if (
+            collisionIndex <= this.props.children.length &&
+            collisionIndex >= 0
+          ) {
+            store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, collisionIndex, this);
+          } else if (
+            typeof this.props.reorderGroup !== 'undefined' && // Is part of a group
+            (
+              (!this.props.children || !this.props.children.length) || // If all items removed
+              (this.isDraggingFrom() && this.props.children.length === 1) // If dragging back to a now empty list
+            )
+          ) {
+            store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, 0, this);
           }
+
+        }
 
         if (this.state.draggedStyle) {
           this.state.draggedStyle.transform = createOffsetStyles(event, this.props);
           store.setDraggedStyle(this.props.reorderId, this.props.reorderGroup, this.state.draggedStyle);
         }
 
-          mouseOffset = {
-            clientX: event.clientX,
-            clientY: event.clientY
-          };
+        mouseOffset = {
+          clientX: event.clientX,
+          clientY: event.clientY
+        };
 
         if (window.requestAnimationFrame) {
           this.windowMoveAF = null;
@@ -667,7 +670,6 @@
 
       // Update dragged position & placeholder index, invalidate drag if moved
       onWindowMove: function (event) {
-        // console.log('onWindowMove');
 
         if (this.windowMoveAF) {
           return;
