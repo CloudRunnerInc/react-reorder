@@ -12,6 +12,7 @@
   var downPos = null;
   var mouseOffset = null;
   var mouseDown = null;
+  var groupFolderTimer = null;
 
   function createOffsetStyles (event, props) {
     if (mouseOffset) {
@@ -523,15 +524,19 @@
       startDrag: function (event, target, index) {
         if (!this.moved) {
           var rect = target.getBoundingClientRect();
-
+          var inFolder = target.className.includes('inFolder');
+          var folderPosition;
+          if (this.props.folderParent) {
+            var parentModal = ReactDOM.findDOMNode(this.props.folderParent.current.ref);
+            folderPosition = parentModal.getBoundingClientRect();
+          }
           var draggedStyle = {
             position: 'fixed',
-            top: rect.top,
-            left: rect.left,
+            top: inFolder && folderPosition ? rect.top - folderPosition.top : rect.top,
+            left: inFolder && folderPosition ? rect.left - folderPosition.left : rect.left,
             width: rect.width,
             height: rect.height
           };
-
           store.startDrag(this.props.reorderId, this.props.reorderGroup, index, this.props.children[index], this);
           store.setDraggedStyle(this.props.reorderId, this.props.reorderGroup, draggedStyle);
           var draggedElementId = target.getAttribute('id');
@@ -560,7 +565,6 @@
         if (event.button === 2 || this.props.disabled) {
           return;
         }
-
         this.copyTouchKeys(event);
 
         this.moved = false;
@@ -571,7 +575,6 @@
 
         var holdTime = this.getHoldTime(event);
         var target = event.currentTarget;
-
         if (holdTime) {
           this.persistEvent(event);
           this.holdTimeout = setTimeout(this.startDrag.bind(this, event, target, index), holdTime);
@@ -583,6 +586,7 @@
       // Stop dragging - reset style & draggedIndex, handle reorder
       onWindowUp: function (event) {
         clearTimeout(this.holdTimeout);
+        this.resetFolderHoverTimer();
 
         if (this.isDragging() && this.isDraggingFrom()) {
           var fromIndex = this.state.draggedIndex;
@@ -607,13 +611,34 @@
             );
           }
         }
-
+        
         downPos = null;
         mouseOffset = null;
         mouseDown = null;
+        this.stopReordering = false;
+        this.windowMoveAF = null;
+      },
+
+      setFolderHoverTimer: function (element, folderElement) {
+        var that = this;
+        groupFolderTimer = setTimeout(function () {
+          that.props.onFolderHovered({
+            draggedElement: element,
+            folderElement: folderElement
+          });
+          that.stopReordering = true;
+        }, 1000);
+      },
+
+      resetFolderHoverTimer: function () {
+        clearTimeout(groupFolderTimer);
+        groupFolderTimer = undefined;
       },
 
       _handleAF: function (event) {
+        if (this.stopReordering || this.props.disabled) {
+          return;
+        }
         this.copyTouchKeys(event);
 
         if (
@@ -627,16 +652,32 @@
 
         var element = this.rootNode;
 
-        if (this.collidesWithElement(event, element)) {
+        // check if the dragged element is a folder
+        var draggedElement = this.state.draggedElement;
+        var isFolderDragging = (
+          draggedElement &&
+          draggedElement.props.className &&
+          draggedElement.props.className.includes(this.props.folderClassName)
+        );
 
+        if (this.collidesWithElement(event, element)) {
           var children = element.childNodes;
           var collisionIndex = this.findCollisionIndex(event, children);
-
           if (
             collisionIndex <= this.props.children.length &&
             collisionIndex >= 0
           ) {
-            store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, collisionIndex, this);
+            var classes = Array.from(children[collisionIndex].classList);
+            // If the colliding element is a folder and we are not dragging a
+            // folder, trigger the folder callback timer
+            if (classes && classes.includes(this.props.folderClassName) && !isFolderDragging) {
+              if (!groupFolderTimer) {
+                this.setFolderHoverTimer(element, children[collisionIndex]);
+              }
+            } else {
+              this.resetFolderHoverTimer();
+              store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, collisionIndex, this);
+            }
           } else if (
             typeof this.props.reorderGroup !== 'undefined' && // Is part of a group
             (
@@ -644,9 +685,14 @@
               (this.isDraggingFrom() && this.props.children.length === 1) // If dragging back to a now empty list
             )
           ) {
+            this.resetFolderHoverTimer();
             store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, 0, this);
+          } else {
+            this.resetFolderHoverTimer();
           }
 
+        } else if (groupFolderTimer) {
+          this.resetFolderHoverTimer();
         }
 
         if (this.state.draggedStyle) {
@@ -717,6 +763,7 @@
 
       // Add listeners
       componentWillMount: function () {
+        this.stopReordering = false;
         store.registerReorderComponent(this);
         window.addEventListener('mouseup', this.onWindowUp, {passive: false});
         window.addEventListener('touchend', this.onWindowUp, {passive: false});
@@ -815,9 +862,15 @@
       touchHoldTime: PropTypes.number,
       mouseHoldTime: PropTypes.number,
       onReorder: PropTypes.func,
-      // onDragStart and onDragEnd are callbacks with the only argument being the id attribute on the element being dragged
+      // onDragStart and onDragEnd are callbacks with the only argument being
+      // the id attribute on the element being dragged
       onDragStart: PropTypes.func,
       onDragEnd: PropTypes.func,
+      // onFolderHovered callback when an item is dragged over an element with
+      // the class of folderClassName or "folder" by default
+      onFolderHovered: PropTypes.func,
+      folderClassName: PropTypes.string,
+      folderParent: PropTypes.object,
       placeholder: PropTypes.element,
       autoScroll: PropTypes.bool,
       autoScrollParents: PropTypes.bool,
@@ -841,7 +894,8 @@
       autoScroll: true,
       autoScrollParents: true,
       disabled: false,
-      disableContextMenus: true
+      disableContextMenus: true,
+      folderClassName: 'folder'
     };
 
     return Reorder;
