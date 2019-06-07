@@ -1,7 +1,6 @@
 'use strict';
 
 (function () {
-
   var CONSTANTS = {
     HOLD_THRESHOLD: 8,
     SCROLL_INTERVAL: 1000 / 60,
@@ -16,8 +15,8 @@
 
   function createOffsetStyles (event, props) {
     if (mouseOffset) {
-      var top = (!props.lock || props.lock === 'horizontal') ? mouseOffset.clientY - mouseDown.clientY : 0;
-      var left = (!props.lock || props.lock === 'vertical') ? mouseOffset.clientX - mouseDown.clientX : 0;
+      var top = !props.lock || props.lock === 'horizontal' ? mouseOffset.clientY - mouseDown.clientY : 0;
+      var left = !props.lock || props.lock === 'vertical' ? mouseOffset.clientX - mouseDown.clientX : 0;
 
       return 'translate(' + left + 'px,' + top + 'px)';
     }
@@ -32,12 +31,12 @@
 
     if (scrollLeft > 0 && mouseOffset.clientX <= rect.left + scrollAreaX) {
       positionInScrollArea = Math.min(Math.abs(rect.left + scrollAreaX - mouseOffset.clientX), scrollAreaX);
-      return -positionInScrollArea / scrollAreaX * CONSTANTS.SCROLL_SPEED;
+      return (-positionInScrollArea / scrollAreaX) * CONSTANTS.SCROLL_SPEED;
     }
 
     if (scrollLeft < scrollWidth - rect.width && mouseOffset.clientX >= rect.right - scrollAreaX) {
       positionInScrollArea = Math.min(Math.abs(rect.right - scrollAreaX - mouseOffset.clientX), scrollAreaX);
-      return positionInScrollArea / scrollAreaX * CONSTANTS.SCROLL_SPEED;
+      return (positionInScrollArea / scrollAreaX) * CONSTANTS.SCROLL_SPEED;
     }
 
     return 0;
@@ -52,12 +51,12 @@
 
     if (scrollTop > 0 && mouseOffset.clientY <= rect.top + scrollAreaY) {
       positionInScrollArea = Math.min(Math.abs(rect.top + scrollAreaY - mouseOffset.clientY), scrollAreaY);
-      return -positionInScrollArea / scrollAreaY * CONSTANTS.SCROLL_SPEED;
+      return (-positionInScrollArea / scrollAreaY) * CONSTANTS.SCROLL_SPEED;
     }
 
     if (scrollTop < scrollHeight - rect.height && mouseOffset.clientY >= rect.bottom - scrollAreaY) {
       positionInScrollArea = Math.min(Math.abs(rect.bottom - scrollAreaY - mouseOffset.clientY), scrollAreaY);
-      return positionInScrollArea / scrollAreaY * CONSTANTS.SCROLL_SPEED;
+      return (positionInScrollArea / scrollAreaY) * CONSTANTS.SCROLL_SPEED;
     }
 
     return 0;
@@ -182,11 +181,11 @@
 
     function validateComponentIdAndGroup (reorderId, reorderGroup) {
       if (typeof reorderId !== 'string') {
-        throw new Error('Expected reorderId to be a string. Instead got ' + (typeof reorderId));
+        throw new Error('Expected reorderId to be a string. Instead got ' + typeof reorderId);
       }
 
       if (typeof reorderGroup !== 'undefined' && typeof reorderGroup !== 'string') {
-        throw new Error('Expected reorderGroup to be a string. Instead got ' + (typeof reorderGroup));
+        throw new Error('Expected reorderGroup to be a string. Instead got ' + typeof reorderGroup);
       }
     }
 
@@ -197,7 +196,7 @@
       validateComponentIdAndGroup(reorderId, reorderGroup);
 
       if (typeof reorderGroup !== 'undefined') {
-        if ((reorderGroup in reorderGroups) && (reorderId in reorderGroups[reorderGroup])) {
+        if (reorderGroup in reorderGroups && reorderId in reorderGroups[reorderGroup]) {
           throw new Error('Duplicate reorderId: ' + reorderId + ' in reorderGroup: ' + reorderGroup);
         }
 
@@ -223,7 +222,7 @@
           throw new Error('Unknown reorderGroup: ' + reorderGroup);
         }
 
-        if ((reorderGroup in reorderGroups) && !(reorderId in reorderGroups[reorderGroup])) {
+        if (reorderGroup in reorderGroups && !(reorderId in reorderGroups[reorderGroup])) {
           throw new Error('Unknown reorderId: ' + reorderId + ' in reorderGroup: ' + reorderGroup);
         }
 
@@ -414,7 +413,6 @@
   }
 
   function getReorderComponent (React, ReactDOM, createReactClass, PropTypes) {
-
     var Reorder = createReactClass({
       displayName: 'Reorder',
 
@@ -478,7 +476,6 @@
       findCollisionIndex: function (event, listElements) {
         for (var i = 0; i < listElements.length; i += 1) {
           if (!listElements[i].getAttribute('data-placeholder') && !listElements[i].getAttribute('data-dragged')) {
-
             var rect = listElements[i].getBoundingClientRect();
 
             switch (this.props.lock) {
@@ -498,9 +495,7 @@
                 }
                 break;
             }
-
           }
-
         }
 
         return -1;
@@ -611,7 +606,7 @@
             );
           }
         }
-        
+
         downPos = null;
         mouseOffset = null;
         mouseDown = null;
@@ -642,10 +637,9 @@
         this.copyTouchKeys(event);
 
         if (
-          downPos && (
-            Math.abs(event.clientX - downPos.clientX) >= CONSTANTS.HOLD_THRESHOLD ||
-            Math.abs(event.clientY - downPos.clientY) >= CONSTANTS.HOLD_THRESHOLD
-          )
+          downPos &&
+          (Math.abs(event.clientX - downPos.clientX) >= CONSTANTS.HOLD_THRESHOLD ||
+            Math.abs(event.clientY - downPos.clientY) >= CONSTANTS.HOLD_THRESHOLD)
         ) {
           this.moved = true;
         }
@@ -654,19 +648,15 @@
 
         // check if the dragged element is a folder
         var draggedElement = this.state.draggedElement;
-        var isFolderDragging = (
+        var isFolderDragging =
           draggedElement &&
           draggedElement.props.className &&
-          draggedElement.props.className.includes(this.props.folderClassName)
-        );
+          draggedElement.props.className.includes(this.props.folderClassName);
 
         if (this.collidesWithElement(event, element)) {
           var children = element.childNodes;
           var collisionIndex = this.findCollisionIndex(event, children);
-          if (
-            collisionIndex <= this.props.children.length &&
-            collisionIndex >= 0
-          ) {
+          if (collisionIndex <= this.props.children.length && collisionIndex >= 0) {
             var classes = Array.from(children[collisionIndex].classList);
             // If the colliding element is a folder and we are not dragging a
             // folder, trigger the folder callback timer
@@ -680,17 +670,15 @@
             }
           } else if (
             typeof this.props.reorderGroup !== 'undefined' && // Is part of a group
-            (
-              (!this.props.children || !this.props.children.length) || // If all items removed
-              (this.isDraggingFrom() && this.props.children.length === 1) // If dragging back to a now empty list
-            )
+            (!this.props.children ||
+            !this.props.children.length || // If all items removed
+              (this.isDraggingFrom() && this.props.children.length === 1)) // If dragging back to a now empty list
           ) {
             this.resetFolderHoverTimer();
             store.setPlacedIndex(this.props.reorderId, this.props.reorderGroup, 0, this);
           } else {
             this.resetFolderHoverTimer();
           }
-
         } else if (groupFolderTimer) {
           this.resetFolderHoverTimer();
         }
@@ -716,7 +704,6 @@
 
       // Update dragged position & placeholder index, invalidate drag if moved
       onWindowMove: function (event) {
-
         if (this.windowMoveAF) {
           return;
         }
@@ -742,8 +729,7 @@
 
         var wasGroupDragged = !isGroupDragged && storedActiveGroup;
 
-        var isActiveGroup = isPartOfGroup && isGroupDragged &&
-          state.activeGroup === this.props.reorderGroup;
+        var isActiveGroup = isPartOfGroup && isGroupDragged && state.activeGroup === this.props.reorderGroup;
 
         var isDragged = this.props.reorderId === state.draggedId;
         var isPlaced = this.props.reorderId === state.placedId;
@@ -765,11 +751,11 @@
       componentWillMount: function () {
         this.stopReordering = false;
         store.registerReorderComponent(this);
-        window.addEventListener('mouseup', this.onWindowUp, {passive: false});
-        window.addEventListener('touchend', this.onWindowUp, {passive: false});
-        window.addEventListener('mousemove', this.onWindowMove, {passive: false});
-        window.addEventListener('touchmove', this.onWindowMove, {passive: false});
-        window.addEventListener('contextmenu', this.preventContextMenu, {passive: false});
+        window.addEventListener('mouseup', this.onWindowUp, { passive: false });
+        window.addEventListener('touchend', this.onWindowUp, { passive: false });
+        window.addEventListener('mousemove', this.onWindowMove, { passive: false });
+        window.addEventListener('touchmove', this.onWindowMove, { passive: false });
+        window.addEventListener('contextmenu', this.preventContextMenu, { passive: false });
       },
 
       // Store root node
@@ -799,39 +785,34 @@
       },
 
       render: function () {
-        var children = this.props.children && this.props.children.map(function (child, index) {
-          var isDragged = this.isDragging() && this.isDraggingFrom() && index === this.state.draggedIndex;
+        var children =
+          this.props.children &&
+          this.props.children.map(
+            function (child, index) {
+              var isDragged = this.isDragging() && this.isDraggingFrom() && index === this.state.draggedIndex;
 
-          var draggedStyle = isDragged ? assign({}, child.props.style, this.state.draggedStyle) : child.props.style;
+              var draggedStyle = isDragged ? assign({}, child.props.style, this.state.draggedStyle) : child.props.style;
 
-          var draggedClass = [
-            child.props.className || '',
-            (isDragged ? this.props.draggedClassName : '')
-          ].join(' ');
+              var draggedClass = [child.props.className || '', isDragged ? this.props.draggedClassName : ''].join(' ');
 
-          return React.cloneElement(
-            isDragged ? this.state.draggedElement : child,
-            {
-              style: draggedStyle,
-              className: draggedClass,
-              onMouseDown: this.onItemDown.bind(this, child.props.onMouseDown, index),
-              onTouchStart: this.onItemDown.bind(this, child.props.onTouchStart, index),
-              'data-dragged': isDragged ? true : null
-            }
+              return React.cloneElement(isDragged ? this.state.draggedElement : child, {
+                style: draggedStyle,
+                className: draggedClass,
+                onMouseDown: this.onItemDown.bind(this, child.props.onMouseDown, index),
+                onTouchStart: this.onItemDown.bind(this, child.props.onTouchStart, index),
+                'data-dragged': isDragged ? true : null
+              });
+            }.bind(this)
           );
-        }.bind(this));
 
         var placeholderElement = this.props.placeholder || this.state.draggedElement;
 
         if (this.isPlacing() && this.isPlacingTo() && placeholderElement) {
-          var placeholder = React.cloneElement(
-            placeholderElement,
-            {
-              key: 'react-reorder-placeholder',
-              className: [placeholderElement.props.className || '', this.props.placeholderClassName].join(' '),
-              'data-placeholder': true
-            }
-          );
+          var placeholder = React.cloneElement(placeholderElement, {
+            key: 'react-reorder-placeholder',
+            className: [placeholderElement.props.className || '', this.props.placeholderClassName].join(' '),
+            'data-placeholder': true
+          });
 
           children.splice(this.state.placedIndex, 0, placeholder);
         }
@@ -847,7 +828,6 @@
           children
         );
       }
-
     });
 
     Reorder.propTypes = {
@@ -899,7 +879,6 @@
     };
 
     return Reorder;
-
   }
 
   /* istanbul ignore next */
@@ -910,20 +889,23 @@
     var ReactDOM = require('react-dom'); // eslint-disable-line no-undef
     var createReactClass = require('create-react-class'); // eslint-disable-line no-undef
     var PropTypes = require('prop-types'); // eslint-disable-line no-undef
-    module.exports = withReorderMethods( // eslint-disable-line no-undef
+    module.exports = withReorderMethods(
+      // eslint-disable-line no-undef
       getReorderComponent(React, ReactDOM, createReactClass, PropTypes)
     );
-  // Export for amd / require
-  } else if (typeof define === 'function' && define.amd) { // eslint-disable-line no-undef
-    define( // eslint-disable-line no-undef
-      ['react', 'react-dom', 'create-react-class', 'prop-types'],
-      function (ReactAMD, ReactDOMAMD, createReactClassAMD, PropTypesAMD) {
-        return withReorderMethods(
-          getReorderComponent(ReactAMD, ReactDOMAMD, createReactClassAMD, PropTypesAMD)
-        );
-      }
-    );
-  // Export globally
+    // Export for amd / require
+  } else if (typeof define === 'function' && define.amd) {
+    // eslint-disable-line no-undef
+    define(// eslint-disable-line no-undef
+    ['react', 'react-dom', 'create-react-class', 'prop-types'], function (
+      ReactAMD,
+      ReactDOMAMD,
+      createReactClassAMD,
+      PropTypesAMD
+    ) {
+      return withReorderMethods(getReorderComponent(ReactAMD, ReactDOMAMD, createReactClassAMD, PropTypesAMD));
+    });
+    // Export globally
   } else {
     var root;
 
@@ -941,5 +923,4 @@
       getReorderComponent(root.React, root.ReactDOM, root.createReactClass, root.PropTypes)
     );
   }
-
 })();
