@@ -1,6 +1,6 @@
 # React Reorder
 
-__Drag & drop, touch enabled, reorder / sortable list, React component__
+**Drag & drop, touch enabled, reorder / sortable list, React component**
 
 [![CircleCI](https://circleci.com/gh/JakeSidSmith/react-reorder.svg?style=svg)](https://circleci.com/gh/JakeSidSmith/react-reorder)
 
@@ -16,13 +16,138 @@ It also allows the user to set a hold time (duration before drag begins) allowin
 
 ## Installation
 
-Using npm
+- Using npm
 
-Add `--save` or `-S` to update your package.json
+  ```shell
+  npm install react-reorder
+  ```
 
-```
-npm install react-reorder
-```
+  Add `--save` or `-S` to update your package.json
+
+- Using bower
+  ```shell
+  bower install react-reorder
+  ```
+  Add `--save` or `-S` to update your bower.json
+
+## Example
+
+1. If using requirejs: add `react-reorder` to your `require.config`
+
+   ```javascript
+   paths:
+     // <name> : <path/to/module>
+     'react-reorder': 'react-reorder/reorder'
+   }
+   ```
+
+2. If using a module loader (requirejs / browserfiy / commonjs): require `react-reorder` where it will be used in your project
+
+   ```javascript
+   var Reorder = require('react-reorder');
+   ```
+
+   If using requirejs you'll probably want to wrap your module e.g.
+
+   ```javascript
+   define(function(require) {
+     // Require react-reorder here
+   });
+   ```
+
+3. Configuration
+
+   **Note: If your array is an array of primitives (e.g. strings) then `itemKey` is not required as the string itself will be used as the key, however item keys must be unique in any case**
+
+   1. Using JSX
+
+      ```javascript
+      <Reorder
+        // The key of each object in your list to use as the element key
+        itemKey="name"
+        // Lock horizontal to have a vertical list
+        lock="horizontal"
+        // The milliseconds to hold an item for before dragging begins
+        holdTime="500"
+        // The list to display
+        list={[{ name: 'Item 1' }, { name: 'Item 2' }, { name: 'Item 3' }]}
+        // A template to display for each list item
+        template={ListItem}
+        // Function that is called once a reorder has been performed
+        callback={this.callback}
+        // Class to be applied to the outer list element
+        listClass="my-list"
+        // Class to be applied to each list item's wrapper element
+        itemClass="list-item"
+        // A function to be called if a list item is clicked (before hold time is up)
+        itemClicked={this.itemClicked}
+        // The item to be selected (adds 'selected' class)
+        selected={this.state.selected}
+        // The key to compare from the selected item object with each item object
+        selectedKey="uuid"
+        // Allows reordering to be disabled
+        disableReorder={false}
+      />
+      ```
+
+   2. Using standard Javascript
+
+      ```javascript
+      React.createElement(Reorder, {
+        // The key of each object in your list to use as the element key
+        itemKey: 'name',
+        // Lock horizontal to have a vertical list
+        lock: 'horizontal',
+        // The milliseconds to hold an item for before dragging begins
+        holdTime: '500',
+        // The list to display
+        list: [{ name: 'Item 1' }, { name: 'Item 2' }, { name: 'Item 3' }],
+        // A template to display for each list item
+        template: ListItem,
+        // Function that is called once a reorder has been performed
+        callback: this.callback,
+        // Class to be applied to the outer list element
+        listClass: 'my-list',
+        // Class to be applied to each list item's wrapper element
+        itemClass: 'list-item',
+        // A function to be called if a list item is clicked (before hold time is up)
+        itemClicked: this.itemClicked,
+        // The item to be selected (adds 'selected' class)
+        selected: this.state.selected,
+        // The key to compare from the selected item object with each item object
+        selectedKey: 'uuid',
+        // Allows reordering to be disabled
+        disableReorder: false,
+      });
+      ```
+
+4. Callback functions
+
+   1. The `callback` function that is called once a reorder has been performed
+
+      ```javascript
+      function callback(
+        event,
+        itemThatHasBeenMoved,
+        itemsPreviousIndex,
+        itemsNewIndex,
+        reorderedArray
+      ) {
+        // ...
+      }
+      ```
+
+   2. The `itemClicked` function that is called when an item is clicked before any dragging begins
+
+      ```javascript
+      function itemClicked(event, itemThatHasBeenClicked, itemsIndex) {
+        // ...
+      }
+      ```
+
+      **Note: `event` will be the synthetic React event for either `mouseup` or `touchend`, and both contain `clientX` & `clientY` values (for ease of use)**
+
+## Compatibility / Requirements
 
 Using bower
 
@@ -49,7 +174,7 @@ import Reorder, {
   reorder,
   reorderImmutable,
   reorderFromTo,
-  reorderFromToImmutable
+  reorderFromToImmutable,
 } from 'react-reorder';
 ```
 
@@ -75,13 +200,8 @@ import Reorder, {
     <div className="custom-placeholder" /> // Custom placeholder element (optional), defaults to clone of dragged element
   }
 >
-  {
-    this.state.list.map((item) => (
-      <li key={item.name}>
-        {item.name}
-      </li>
-    )).toArray()
-    /*
+  {this.state.list.map(item => <li key={item.name}>{item.name}</li>).toArray()
+  /*
     Note this example is an ImmutableJS List so we must convert it to an array.
     I've left this up to you to covert to an array, as react-reorder updates a lot,
     and if I called this internally it could get rather slow,
@@ -129,4 +249,4 @@ onReorderGroup (event, previousIndex, nextIndex, fromId, toId) {
 
 ## Compatibility / Requirements
 
-* Version `3.x` tested and working with React `15`, but should be backward compatible at least a couple of versions.
+- Version `3.x` tested and working with React `15`, but should be backward compatible at least a couple of versions.
