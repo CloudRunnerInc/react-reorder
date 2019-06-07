@@ -527,7 +527,7 @@
           var inFolder = target.className.includes('inFolder');
           var folderPosition;
           if (this.props.folderParent) {
-            var parentModal = ReactDOM.findDOMNode(this.props.folderParent.current.ref);
+            var parentModal = ReactDOM.findDOMNode(this.props.folderParent.current.ref.current);
             folderPosition = parentModal.getBoundingClientRect();
           }
           var draggedStyle = {
